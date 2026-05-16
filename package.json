@@ -1,0 +1,33 @@
+{
+  "name": "shotchart.dev",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check --write .",
+    "lib:local": "pnpm link ../shotchart.d3.ts",
+    "lib:npm": "pnpm install --force"
+  },
+  "dependencies": {
+    "@tanstack/react-router": "^1.170.3",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "shotchart.d3.ts": "link:../shotchart.d3.ts"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
+    "@tailwindcss/vite": "^4.3.0",
+    "@tanstack/router-plugin": "^1.168.4",
+    "@types/node": "^24.12.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "tailwindcss": "^4.3.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.0.12"
+  }
+}

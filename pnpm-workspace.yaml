@@ -1,0 +1,2 @@
+overrides:
+  shotchart.d3.ts: link:../shotchart.d3.ts
