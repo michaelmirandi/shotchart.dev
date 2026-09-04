@@ -1,2 +1,2 @@
 overrides:
-  shotchart.d3.ts: link:../shotchart.d3.ts
+  shotchart.ts: link:../shotchart.ts

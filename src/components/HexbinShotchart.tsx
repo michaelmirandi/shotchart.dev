@@ -6,7 +6,7 @@ import {
   type HexbinShotchartInstance,
   type Shot,
   type Theme,
-} from "shotchart.d3.ts";
+} from "shotchart.ts";
 
 interface Props {
   courtType: CourtType;

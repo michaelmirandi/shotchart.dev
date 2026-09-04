@@ -1,4 +1,4 @@
-import type { CourtType, LeagueSettings } from "shotchart.d3.ts";
+import type { CourtType, LeagueSettings } from "shotchart.ts";
 import {
   fibaSettings,
   nbaSettings,
@@ -6,7 +6,7 @@ import {
   ncaawSettings,
   nfhsSettings,
   wnbaSettings,
-} from "shotchart.d3.ts";
+} from "shotchart.ts";
 import { type Column, DataTable } from "./DataTable";
 
 const COURTS: Array<{ id: CourtType; settings: LeagueSettings; notes: string }> = [

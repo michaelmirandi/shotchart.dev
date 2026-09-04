@@ -5,7 +5,7 @@ import {
   createHalfcourt,
   type FloorInput,
   type HalfcourtInstance,
-} from "shotchart.d3.ts";
+} from "shotchart.ts";
 
 interface Props {
   courtType: CourtType;

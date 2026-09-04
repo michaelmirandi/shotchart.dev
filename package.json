@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "biome check --write .",
-    "lib:local": "pnpm link ../shotchart.d3.ts",
+    "lib:local": "pnpm link ../shotchart.ts",
     "lib:npm": "pnpm install --force"
   },
   "dependencies": {
@@ -20,7 +20,7 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "shiki": "^4.0.2",
-    "shotchart.d3.ts": "link:../shotchart.d3.ts"
+    "shotchart.ts": "link:../shotchart.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",

@@ -3,7 +3,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import "./styles/globals.css";
-import "shotchart.d3.ts/styles.css";
+import "shotchart.ts/styles.css";
 
 import { routeTree } from "./routeTree.gen";
 

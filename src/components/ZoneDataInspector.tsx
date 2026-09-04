@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { ZoneData } from "shotchart.d3.ts";
+import type { ZoneData } from "shotchart.ts";
 import { CodeBlock } from "./CodeBlock";
 import { type Column, DataTable } from "./DataTable";
 

@@ -1,4 +1,4 @@
-import type { ShotchartZone } from "shotchart.d3.ts";
+import type { ShotchartZone } from "shotchart.ts";
 import { type Column, DataTable } from "./DataTable";
 
 interface ZoneEntry {

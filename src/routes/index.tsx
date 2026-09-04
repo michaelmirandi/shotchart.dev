@@ -14,7 +14,7 @@ import {
   type Orientation,
   type Theme,
   wnbaSettings,
-} from "shotchart.d3.ts";
+} from "shotchart.ts";
 import { CodeBlock } from "../components/CodeBlock";
 import { CourtDiagram } from "../components/CourtDiagram";
 import { CourtDimensionsTable } from "../components/CourtDimensionsTable";
@@ -223,7 +223,7 @@ function Docs() {
       {/* ------------------------------------------------------------------ */}
 
       <section id="overview" className="scroll-mt-16">
-        <h1 className="text-3xl font-semibold tracking-tight">shotchart.d3.ts</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">shotchart.ts</h1>
         <p className="mt-4 text-lg text-fg-muted">
           Framework-agnostic basketball shotcharts built on D3. Hand it an SVG element and a small
           options object; it draws the court and your data.
@@ -242,11 +242,11 @@ function Docs() {
       <Section id="installation" title="Installation">
         <CodeBlock
           lang="bash"
-          code={`pnpm add shotchart.d3.ts
-# npm install shotchart.d3.ts · yarn add shotchart.d3.ts · bun add shotchart.d3.ts`}
+          code={`pnpm add shotchart.ts
+# npm install shotchart.ts · yarn add shotchart.ts · bun add shotchart.ts`}
         />
         <p className="text-fg-muted">Then import the stylesheet once at your app entry:</p>
-        <CodeBlock code={'import "shotchart.d3.ts/styles.css";'} lang="typescript" />
+        <CodeBlock code={'import "shotchart.ts/styles.css";'} lang="typescript" />
       </Section>
 
       {/* ------------------------------------------------------------------ */}
@@ -361,7 +361,7 @@ function Docs() {
         </p>
         <CodeBlock
           lang="typescript"
-          code={`import type { FloorInput, FloorOptions } from "shotchart.d3.ts";
+          code={`import type { FloorInput, FloorOptions } from "shotchart.ts";
 
 type FloorInput = "none" | "wood" | "maple" | "walnut" | "dark" | FloorOptions;
 
@@ -449,8 +449,8 @@ import {
   createShotchartSettings,
   nbaSettings,
   shotToSvg,
-} from "shotchart.d3.ts";
-import "shotchart.d3.ts/styles.css";
+} from "shotchart.ts";
+import "shotchart.ts/styles.css";
 
 const svg = document.querySelector<SVGSVGElement>("#chart")!;
 createHalfcourt(svg, { courtType: "nba" });
@@ -516,7 +516,7 @@ for (const m of marks) {
           <Labeled label="The Shot type">
             <CodeBlock
               lang="typescript"
-              code={`import type { Shot } from "shotchart.d3.ts";
+              code={`import type { Shot } from "shotchart.ts";
 
 interface Shot {
   x: number;      // feet from basket center, +x right
@@ -665,7 +665,7 @@ createShotScatter(svg, { courtType: "nba", data: shots });`}
           </p>
           <CodeBlock
             lang="typescript"
-            code={`import type { ZoneData, ShotchartZone } from "shotchart.d3.ts";
+            code={`import type { ZoneData, ShotchartZone } from "shotchart.ts";
 
 interface ZoneData {
   bucket: ShotchartZone;  // one of 14 zone codes (see below)
@@ -919,17 +919,17 @@ interface ZoneData {
       <Section id="resources" title="Resources">
         <ul className="space-y-2">
           <li>
-            <ExternalLink href="https://github.com/michaelmirandi/shotchart.d3.ts">
+            <ExternalLink href="https://github.com/michaelmirandi/shotchart.ts">
               GitHub
             </ExternalLink>
             <span className="text-fg-muted"> — source, issues, README</span>
           </li>
           <li>
-            <ExternalLink href="https://www.npmjs.com/package/shotchart.d3.ts">npm</ExternalLink>
+            <ExternalLink href="https://www.npmjs.com/package/shotchart.ts">npm</ExternalLink>
             <span className="text-fg-muted"> — install and versions</span>
           </li>
           <li>
-            <ExternalLink href="https://github.com/michaelmirandi/shotchart.d3.ts/blob/main/README.md">
+            <ExternalLink href="https://github.com/michaelmirandi/shotchart.ts/blob/main/README.md">
               README
             </ExternalLink>
             <span className="text-fg-muted"> — full reference</span>

@@ -1,4 +1,4 @@
-import { type LeagueSettings, nbaSettings, type Shot, type ZoneData } from "shotchart.d3.ts";
+import { type LeagueSettings, nbaSettings, type Shot, type ZoneData } from "shotchart.ts";
 
 export const exampleZoneData: ZoneData[] = [
   { bucket: "RIM", fgm: 32, fga: 45, percentile: 89 },

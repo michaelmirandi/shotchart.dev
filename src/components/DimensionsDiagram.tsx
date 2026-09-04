@@ -1,6 +1,6 @@
 import { select } from "d3-selection";
 import { useEffect, useRef } from "react";
-import { createHalfcourt, createShotchartSettings, type LeagueSettings } from "shotchart.d3.ts";
+import { createHalfcourt, createShotchartSettings, type LeagueSettings } from "shotchart.ts";
 import { annotator, drawCallouts, fmt } from "../lib/annotate";
 
 // Gutters around the court, in feet (the SVG unit).

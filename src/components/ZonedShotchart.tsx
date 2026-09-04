@@ -6,7 +6,7 @@ import {
   type Theme,
   type ZoneData,
   type ZonedShotchartInstance,
-} from "shotchart.d3.ts";
+} from "shotchart.ts";
 
 interface Props {
   courtType: CourtType;

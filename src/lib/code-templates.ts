@@ -7,7 +7,7 @@ import type {
   Shot,
   Theme,
   ZoneData,
-} from "shotchart.d3.ts";
+} from "shotchart.ts";
 
 export const FRAMEWORKS = ["vanilla", "react", "vue", "svelte", "angular"] as const;
 export type Framework = (typeof FRAMEWORKS)[number];
@@ -51,9 +51,9 @@ function formatOptions(options: Record<string, OptValue>, indent: number): strin
 }
 
 function importLine(names: string[]): string {
-  const single = `import { ${names.join(", ")} } from "shotchart.d3.ts";`;
+  const single = `import { ${names.join(", ")} } from "shotchart.ts";`;
   if (single.length <= 80) return single;
-  return `import {\n${names.map((n) => `  ${n},`).join("\n")}\n} from "shotchart.d3.ts";`;
+  return `import {\n${names.map((n) => `  ${n},`).join("\n")}\n} from "shotchart.ts";`;
 }
 
 export function formatZoneData(data: ZoneData[]): string {
@@ -95,7 +95,7 @@ function renderVanilla(spec: FactorySpec): string {
     ? `\n// Cheap updates (no re-render):\n${spec.setters.map((s) => `// chart.${s};`).join("\n")}\n`
     : "\n";
   return `${importLine([spec.factory, ...spec.types.map((t) => `type ${t}`)])}
-import "shotchart.d3.ts/styles.css";
+import "shotchart.ts/styles.css";
 ${spec.preamble ? `\n${spec.preamble}\n` : ""}
 const svg = document.querySelector<SVGSVGElement>("#chart")!;
 const chart = ${spec.factory}(svg, {
@@ -114,7 +114,7 @@ function renderReact(spec: FactorySpec): string {
     : "";
   return `import { useEffect, useRef } from "react";
 ${importLine([spec.factory, ...spec.types.map((t) => `type ${t}`), `type ${spec.instanceType}`])}
-import "shotchart.d3.ts/styles.css";
+import "shotchart.ts/styles.css";
 ${spec.preamble ? `\n${spec.preamble}\n` : ""}
 export function ${spec.componentName}() {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -136,7 +136,7 @@ function renderVue(spec: FactorySpec): string {
   return `<script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from "vue";
 ${importLine([spec.factory, ...spec.types.map((t) => `type ${t}`), `type ${spec.instanceType}`])}
-import "shotchart.d3.ts/styles.css";
+import "shotchart.ts/styles.css";
 ${spec.preamble ? `\n${spec.preamble}\n` : ""}
 const svgRef = ref<SVGSVGElement | null>(null);
 let chart: ${spec.instanceType} | null = null;
@@ -167,7 +167,7 @@ function renderSvelte(spec: FactorySpec): string {
   ${importLine([spec.factory, ...spec.types.map((t) => `type ${t}`), `type ${spec.instanceType}`])
     .split("\n")
     .join("\n  ")}
-  import "shotchart.d3.ts/styles.css";
+  import "shotchart.ts/styles.css";
 ${preamble}
   let svg: SVGSVGElement;
   let chart: ${spec.instanceType} | null = null;
@@ -192,7 +192,7 @@ function renderAngular(spec: FactorySpec): string {
   ViewChild,
 } from "@angular/core";
 ${importLine([spec.factory, ...spec.types.map((t) => `type ${t}`), `type ${spec.instanceType}`])}
-import "shotchart.d3.ts/styles.css";
+import "shotchart.ts/styles.css";
 ${spec.preamble ? `\n${spec.preamble}\n` : ""}
 @Component({
   selector: "${spec.selector}",

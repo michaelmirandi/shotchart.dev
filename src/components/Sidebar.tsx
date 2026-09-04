@@ -1,16 +1,16 @@
 import { Link } from "@tanstack/react-router";
-import libraryPackage from "shotchart.d3.ts/package.json";
+import libraryPackage from "shotchart.ts/package.json";
 import { NAV } from "../lib/sections";
 import { DocsToc } from "./DocsToc";
 import { ThemeToggle } from "./ThemeToggle";
 
-const GITHUB = "https://github.com/michaelmirandi/shotchart.d3.ts";
-const NPM = "https://www.npmjs.com/package/shotchart.d3.ts";
+const GITHUB = "https://github.com/michaelmirandi/shotchart.ts";
+const NPM = "https://www.npmjs.com/package/shotchart.ts";
 
 function Wordmark() {
   return (
     <Link to="/" className="text-[15px] font-semibold tracking-tight text-fg">
-      shotchart.d3.ts
+      shotchart.ts
     </Link>
   );
 }

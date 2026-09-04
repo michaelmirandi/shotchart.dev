@@ -7,7 +7,7 @@ import {
   type MissedMarker,
   type Shot,
   type ShotScatterInstance,
-} from "shotchart.d3.ts";
+} from "shotchart.ts";
 
 interface Props {
   courtType: CourtType;
