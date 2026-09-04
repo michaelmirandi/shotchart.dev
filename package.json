@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check --write .",
     "lib:local": "pnpm link ../shotchart.ts",
-    "lib:npm": "pnpm install --force"
+    "lib:npm": "pnpm unlink shotchart.ts && pnpm install"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.8",
@@ -20,7 +20,7 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "shiki": "^4.0.2",
-    "shotchart.ts": "link:../shotchart.ts"
+    "shotchart.ts": "^0.2.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
