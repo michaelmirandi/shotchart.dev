@@ -1,57 +1,36 @@
-import { Link, Outlet, createRootRoute } from "@tanstack/react-router";
+import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
+import { MobileBar, Sidebar } from "../components/Sidebar";
 
 export const Route = createRootRoute({
   component: RootLayout,
+  notFoundComponent: NotFound,
 });
 
 function RootLayout() {
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b border-neutral-200 bg-white">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="font-semibold text-lg">
-            shotchart<span className="text-orange-500">.dev</span>
-          </Link>
-          <nav className="flex gap-6 text-sm text-neutral-700">
-            <Link
-              to="/halfcourt"
-              className="hover:text-black"
-              activeProps={{ className: "text-black font-medium" }}
-            >
-              Halfcourt
-            </Link>
-            <Link
-              to="/zoned-shotchart"
-              className="hover:text-black"
-              activeProps={{ className: "text-black font-medium" }}
-            >
-              Zoned shotchart
-            </Link>
-            <a
-              href="https://github.com/michaelmirandi/shotchart.d3.ts"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-black"
-            >
-              GitHub
-            </a>
-          </nav>
-        </div>
-      </header>
-      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-10">
-        <Outlet />
-      </main>
-      <footer className="border-t border-neutral-200 text-xs text-neutral-500">
-        <div className="max-w-5xl mx-auto px-6 py-4">
-          Live demos for{" "}
-          <a
-            href="https://www.npmjs.com/package/shotchart.d3.ts"
-            className="underline hover:text-black"
-          >
-            shotchart.d3.ts
-          </a>
-        </div>
-      </footer>
+    <div className="min-h-screen bg-canvas text-fg lg:grid lg:grid-cols-[15rem_1fr]">
+      <Sidebar />
+      <div className="min-w-0">
+        <MobileBar />
+        <main className="mx-auto w-full max-w-5xl px-6 py-10 lg:px-12 lg:py-14">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}
+
+function NotFound() {
+  return (
+    <div className="space-y-3">
+      <h1 className="text-2xl font-semibold tracking-tight">Page not found</h1>
+      <p className="text-fg-muted">
+        There is nothing at this address.{" "}
+        <Link to="/" className="text-fg underline underline-offset-4">
+          Back to the docs
+        </Link>
+        .
+      </p>
     </div>
   );
 }

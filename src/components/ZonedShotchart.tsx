@@ -1,46 +1,48 @@
+import { useEffect, useRef } from "react";
 import {
+  type CourtType,
+  createZonedShotchart,
+  type FloorInput,
+  type Theme,
   type ZoneData,
   type ZonedShotchartInstance,
-  createZonedShotchart,
 } from "shotchart.d3.ts";
-import { useEffect, useRef } from "react";
 
 interface Props {
+  courtType: CourtType;
+  theme: Theme;
   data: ZoneData[];
-  courtType?: "nba" | "college";
-  theme?: "red-green" | "blue-orange";
-  backgroundTheme?: "dark" | "light";
+  floor?: FloorInput;
 }
 
-export function ZonedShotchart(props: Props) {
+export function ZonedShotchart({ courtType, theme, data, floor = "none" }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const chartRef = useRef<ZonedShotchartInstance | null>(null);
 
-  // Recreate the chart only on structural changes (court type)
+  // Rebuild only on structural changes (court, floor); data and theme propagate via setters.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional — initial data/theme are captured at mount
   useEffect(() => {
     if (!svgRef.current) return;
     chartRef.current = createZonedShotchart(svgRef.current, {
-      courtType: props.courtType,
-      data: props.data,
-      theme: props.theme,
-      backgroundTheme: props.backgroundTheme,
+      courtType,
+      theme,
+      backgroundTheme: "dark",
+      floor,
+      data,
     });
-    return () => chartRef.current?.destroy();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.courtType]);
-
-  // Cheap, in-place updates for everything else
-  useEffect(() => {
-    chartRef.current?.setData(props.data);
-  }, [props.data]);
+    return () => {
+      chartRef.current?.destroy();
+      chartRef.current = null;
+    };
+  }, [courtType, floor]);
 
   useEffect(() => {
-    if (props.theme) chartRef.current?.setTheme(props.theme);
-  }, [props.theme]);
+    chartRef.current?.setData(data);
+  }, [data]);
 
   useEffect(() => {
-    if (props.backgroundTheme) chartRef.current?.setBackground(props.backgroundTheme);
-  }, [props.backgroundTheme]);
+    chartRef.current?.setTheme(theme);
+  }, [theme]);
 
-  return <svg ref={svgRef} className="w-full max-w-2xl mx-auto block" />;
+  return <svg ref={svgRef} className="mx-auto w-full max-w-3xl" />;
 }

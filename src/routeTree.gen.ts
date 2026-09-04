@@ -9,18 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ZonedShotchartRouteImport } from './routes/zoned-shotchart'
-import { Route as HalfcourtRouteImport } from './routes/halfcourt'
+import { Route as DocsRouteImport } from './routes/docs'
 import { Route as IndexRouteImport } from './routes/index'
 
-const ZonedShotchartRoute = ZonedShotchartRouteImport.update({
-  id: '/zoned-shotchart',
-  path: '/zoned-shotchart',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HalfcourtRoute = HalfcourtRouteImport.update({
-  id: '/halfcourt',
-  path: '/halfcourt',
+const DocsRoute = DocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -31,48 +25,37 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/halfcourt': typeof HalfcourtRoute
-  '/zoned-shotchart': typeof ZonedShotchartRoute
+  '/docs': typeof DocsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/halfcourt': typeof HalfcourtRoute
-  '/zoned-shotchart': typeof ZonedShotchartRoute
+  '/docs': typeof DocsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/halfcourt': typeof HalfcourtRoute
-  '/zoned-shotchart': typeof ZonedShotchartRoute
+  '/docs': typeof DocsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/halfcourt' | '/zoned-shotchart'
+  fullPaths: '/' | '/docs'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/halfcourt' | '/zoned-shotchart'
-  id: '__root__' | '/' | '/halfcourt' | '/zoned-shotchart'
+  to: '/' | '/docs'
+  id: '__root__' | '/' | '/docs'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  HalfcourtRoute: typeof HalfcourtRoute
-  ZonedShotchartRoute: typeof ZonedShotchartRoute
+  DocsRoute: typeof DocsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/zoned-shotchart': {
-      id: '/zoned-shotchart'
-      path: '/zoned-shotchart'
-      fullPath: '/zoned-shotchart'
-      preLoaderRoute: typeof ZonedShotchartRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/halfcourt': {
-      id: '/halfcourt'
-      path: '/halfcourt'
-      fullPath: '/halfcourt'
-      preLoaderRoute: typeof HalfcourtRouteImport
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -87,8 +70,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  HalfcourtRoute: HalfcourtRoute,
-  ZonedShotchartRoute: ZonedShotchartRoute,
+  DocsRoute: DocsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

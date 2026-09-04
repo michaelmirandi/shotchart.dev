@@ -13,15 +13,20 @@
     "lib:npm": "pnpm install --force"
   },
   "dependencies": {
+    "@fontsource-variable/geist": "^5.2.8",
+    "@fontsource-variable/geist-mono": "^5.2.7",
     "@tanstack/react-router": "^1.170.3",
+    "d3-selection": "^3.0.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "shiki": "^4.0.2",
     "shotchart.d3.ts": "link:../shotchart.d3.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
     "@tailwindcss/vite": "^4.3.0",
     "@tanstack/router-plugin": "^1.168.4",
+    "@types/d3-selection": "^3.0.11",
     "@types/node": "^24.12.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

@@ -1,7 +1,140 @@
 @import "tailwindcss";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* -------------------- Tokens --------------------
+ * Semantic colors live in plain CSS variables that flip under `.dark`, and are
+ * exposed to Tailwind through `@theme inline` so components use `bg-canvas`,
+ * `text-fg`, `border-line`, … without duplicating every class for dark mode.
+ */
+
+:root {
+  --canvas: #ffffff;
+  --canvas-subtle: #fafafa;
+  --fg: #171717;
+  --fg-muted: #737373;
+  --line: #e5e5e5;
+  --line-strong: #d4d4d4;
+}
+
+.dark {
+  --canvas: #0a0a0a;
+  --canvas-subtle: #141414;
+  --fg: #ededed;
+  --fg-muted: #8b8b8b;
+  --line: #262626;
+  --line-strong: #3a3a3a;
+}
+
+@theme inline {
+  --font-sans: "Geist Variable", system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", monospace;
+
+  --color-canvas: var(--canvas);
+  --color-canvas-subtle: var(--canvas-subtle);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+}
+
+/* -------------------- Base -------------------- */
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+html {
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
 
 body {
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
-    "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  background: var(--canvas);
+  color: var(--fg);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+::selection {
+  background: var(--line-strong);
+}
+
+/* -------------------- Coordinate diagram annotations --------------------
+ * The diagram draws its own labels outside the library's `g.shotchart` group,
+ * so none of the library's (or the overrides') text rules reach them.
+ */
+
+.court-annotations {
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+}
+
+.court-annotations text {
+  fill: currentColor;
+  stroke: none;
+}
+
+.court-annotations text.callout-name {
+  fill: var(--fg);
+  font-weight: 500;
+}
+
+/* -------------------- Library chart overrides --------------------
+ * The library stylesheet paints for a light canvas. In dark mode brighten the
+ * court lines and labels. Scoped to `.shotchart` (the library's own wrapper)
+ * so they never leak into other SVGs on the page.
+ */
+
+.dark .shot-chart-court * {
+  stroke: rgb(255 255 255 / 0.65);
+}
+
+.dark .shot-chart-court--on-floor * {
+  stroke: rgb(255 255 255 / 0.95);
+}
+
+.dark .shotchart text {
+  /* biome-ignore lint/complexity/noImportantStyles: the library's own label rule is !important */
+  fill: rgb(255 255 255 / 0.92) !important;
+  /* biome-ignore lint/complexity/noImportantStyles: the library's own label rule is !important */
+  stroke: rgb(255 255 255 / 0.92) !important;
+}
+
+.dark .shot-chart-court--on-floor .shot-chart-court-hoop {
+  stroke: #e8531f;
+}
+
+/* -------------------- Shiki (dual theme) --------------------
+ * Rendered with `themes: { light, dark }` and `defaultColor: false`, so Shiki
+ * emits per-token CSS variables and we pick the active one here.
+ */
+
+.shiki,
+.shiki span {
+  color: var(--shiki-light);
+}
+
+.dark .shiki,
+.dark .shiki span {
+  color: var(--shiki-dark);
+}
+
+.shiki-wrapper .shiki {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  background: transparent;
+}
+
+.shiki-wrapper .shiki code {
+  font-family: var(--font-mono);
+  font-feature-settings: normal;
 }
