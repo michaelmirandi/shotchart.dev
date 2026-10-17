@@ -34,3 +34,18 @@ export function Control({ label, children }: ControlProps) {
     </div>
   );
 }
+
+interface ControlGroupProps {
+  title: string;
+  children: ReactNode;
+}
+
+/** A titled row of `Control`s, for demos with many options. Spans the footer's full width. */
+export function ControlGroup({ title, children }: ControlGroupProps) {
+  return (
+    <div className="w-full space-y-2">
+      <p className="text-[11px] font-medium tracking-wide text-fg uppercase">{title}</p>
+      <div className="flex flex-wrap items-end gap-x-6 gap-y-3">{children}</div>
+    </div>
+  );
+}

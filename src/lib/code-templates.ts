@@ -7,6 +7,7 @@ import type {
   Shot,
   Theme,
   TrackingShapes,
+  TrackingStyle,
   ZoneData,
 } from "shotchart.ts";
 
@@ -360,10 +361,36 @@ export const fullcourtTemplates = templatesFor<FullcourtState>(
 );
 
 export interface TrackingState {
+  courtType: CourtType;
   orientation: Orientation;
   floor: FloorChoice;
   speed: number;
+  loop: boolean;
   shapes: TrackingShapes;
+  style: TrackingStyle;
+}
+
+/** Mirrors `createTracking`'s built-in defaults, so examples only list what changed. */
+export const TRACKING_STYLE_DEFAULTS: TrackingStyle = {
+  playerRadius: 1,
+  homeColor: "#2563eb",
+  awayColor: "#dc2626",
+  ballRadius: 0.5,
+  ballColor: "#f97316",
+  labels: true,
+  labelColor: "#ffffff",
+  opacity: 1,
+  hullOpacity: 0.15,
+  centroidRadius: 0.8,
+  spokeWidth: 0.12,
+};
+
+/** Only the style keys that differ from the defaults. */
+function styleOption(style: TrackingStyle): OptValue {
+  const changed = (Object.keys(TRACKING_STYLE_DEFAULTS) as (keyof TrackingStyle)[])
+    .filter((k) => style[k] !== TRACKING_STYLE_DEFAULTS[k])
+    .map((k) => `${k}: ${JSON.stringify(style[k])}`);
+  return changed.length ? { raw: `{ ${changed.join(", ")} }` } : undefined;
 }
 
 /** Only the toggles that are on, e.g. `{ defense: { centroid: true, hull: true } }`. */
@@ -378,7 +405,7 @@ function shapesOption(shapes: TrackingShapes): OptValue {
 }
 
 export const trackingTemplates = templatesFor<TrackingState>(
-  ({ orientation, floor, speed, shapes }) => ({
+  ({ courtType, orientation, floor, speed, loop, shapes, style }) => ({
     factory: "createTracking",
     instanceType: "TrackingInstance",
     types: ["TrackingFrame"],
@@ -389,12 +416,14 @@ export const trackingTemplates = templatesFor<TrackingState>(
 import possession from "./possession.json";
 const frames = possession as TrackingFrame[];`,
     options: {
-      courtType: "ncaam",
+      courtType,
       data: { raw: "frames" },
       orientation: orientation === "vertical" ? "vertical" : undefined,
       floor: floorOption(floor),
       speed: speed === 1 ? undefined : speed,
+      loop: loop || undefined,
       shapes: shapesOption(shapes),
+      style: styleOption(style),
     },
     setters: [
       "play()",

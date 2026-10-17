@@ -1,17 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  type CourtType,
   createTracking,
   type FloorInput,
   type Orientation,
   type TrackingFrame,
   type TrackingInstance,
   type TrackingShapes,
+  type TrackingStyle,
 } from "shotchart.ts";
 import { formatClock } from "../lib/tracking-sample";
 
 interface Props {
   data: TrackingFrame[];
   fps: number;
+  courtType?: CourtType;
+  loop?: boolean;
+  style?: Partial<TrackingStyle>;
   orientation?: Orientation;
   floor?: FloorInput;
   speed?: number;
@@ -26,6 +31,9 @@ interface Props {
 export function Tracking({
   data,
   fps,
+  courtType = "ncaam",
+  loop = false,
+  style,
   orientation = "horizontal",
   floor = "none",
   speed = 1,
@@ -37,19 +45,21 @@ export function Tracking({
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
 
-  // Rebuild on structural changes and resume from the same frame; speed and
-  // shapes propagate via their setters.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional — frame/speed/shapes are captured at mount
+  // Rebuild on structural changes and resume from the same frame; speed,
+  // shapes and style propagate via their setters.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional — frame/speed/shapes/style are captured at mount
   useEffect(() => {
     if (!svgRef.current) return;
     const chart = createTracking(svgRef.current, {
-      courtType: "ncaam",
+      courtType,
       orientation,
       floor,
       data,
       fps,
       speed,
+      loop,
       shapes,
+      style,
       onFrame: (i) => {
         setIndex(i);
         // Playback stops by itself at the last frame.
@@ -65,7 +75,7 @@ export function Tracking({
       chart.destroy();
       chartRef.current = null;
     };
-  }, [data, fps, orientation, floor, setup]);
+  }, [data, fps, courtType, orientation, floor, loop, setup]);
 
   useEffect(() => {
     chartRef.current?.setSpeed(speed);
@@ -74,6 +84,10 @@ export function Tracking({
   useEffect(() => {
     if (shapes) chartRef.current?.setShapes(shapes);
   }, [shapes]);
+
+  useEffect(() => {
+    if (style) chartRef.current?.setStyle(style);
+  }, [style]);
 
   function toggle() {
     const chart = chartRef.current;

@@ -14,13 +14,15 @@ import {
   type Orientation,
   type Theme,
   type TrackingShapes,
+  type TrackingStyle,
   wnbaSettings,
 } from "shotchart.ts";
 import { CodeBlock } from "../components/CodeBlock";
+import { ColorSwatch } from "../components/ColorSwatch";
 import { CourtDiagram } from "../components/CourtDiagram";
 import { CourtDimensionsTable } from "../components/CourtDimensionsTable";
 import { type Column, DataTable } from "../components/DataTable";
-import { Control, Demo } from "../components/Demo";
+import { Control, ControlGroup, Demo } from "../components/Demo";
 import { DimensionsDiagram } from "../components/DimensionsDiagram";
 import { FrameworkTabs } from "../components/FrameworkTabs";
 import { Fullcourt } from "../components/Fullcourt";
@@ -29,6 +31,7 @@ import { HexbinShotchart } from "../components/HexbinShotchart";
 import { LandmarksTable } from "../components/LandmarksTable";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { ShotScatter } from "../components/ShotScatter";
+import { Slider } from "../components/Slider";
 import { ToggleChips } from "../components/ToggleChips";
 import { Tracking } from "../components/Tracking";
 import { nearestDefenderOverlay } from "../components/TrackingCustomOverlay";
@@ -42,6 +45,7 @@ import {
   halfcourtTemplates,
   hexbinTemplates,
   scatterTemplates,
+  TRACKING_STYLE_DEFAULTS,
   trackingTemplates,
   zonedTemplates,
 } from "../lib/code-templates";
@@ -154,10 +158,20 @@ const off = chart.addFrameListener((_, frame) => {
 
 // Teardown: off(); chart.destroy();`;
 
-const TRACKING_TEAMS = [
-  { side: "away", color: "#dc2626" },
-  { side: "home", color: "#2563eb" },
-] as const;
+const TRACKING_SIDES = ["away", "home"] as const;
+
+// The sample is a 94' NCAA game in center-court feet; FIBA (91.9') and NFHS (84')
+// would put the baskets in the wrong place, so only the 94 × 50 courts are offered.
+const TRACKING_COURT_OPTIONS = COURT_OPTIONS.filter((o) =>
+  ["nba", "wnba", "ncaam", "ncaaw"].includes(o.value),
+);
+
+const ON_OFF: ReadonlyArray<{ value: "on" | "off"; label: string }> = [
+  { value: "on", label: "On" },
+  { value: "off", label: "Off" },
+];
+
+const DEFAULT_DEFENSE: ShapeKey[] = ["centroid", "hull"];
 
 interface ApiRow {
   name: string;
@@ -199,11 +213,26 @@ function Docs() {
   const [hexFloor, setHexFloor] = useState<FloorChoice>("none");
   const [hexMin, setHexMin] = useState<"1" | "3">("1");
 
+  const [trackType, setTrackType] = useState<CourtType>("ncaam");
   const [trackOrientation, setTrackOrientation] = useState<Orientation>("horizontal");
   const [trackFloor, setTrackFloor] = useState<FloorChoice>("maple");
   const [trackSpeed, setTrackSpeed] = useState<SpeedKey>("1");
-  const [trackDefense, setTrackDefense] = useState<ShapeKey[]>(["centroid", "hull"]);
+  const [trackLoop, setTrackLoop] = useState(false);
+  const [trackDefense, setTrackDefense] = useState<ShapeKey[]>(DEFAULT_DEFENSE);
   const [trackOffense, setTrackOffense] = useState<ShapeKey[]>([]);
+  const [trackStyle, setTrackStyle] = useState<TrackingStyle>(TRACKING_STYLE_DEFAULTS);
+  const setStyleKey = <K extends keyof TrackingStyle>(key: K, value: TrackingStyle[K]) =>
+    setTrackStyle((prev) => ({ ...prev, [key]: value }));
+  const resetTracking = () => {
+    setTrackType("ncaam");
+    setTrackOrientation("horizontal");
+    setTrackFloor("maple");
+    setTrackSpeed("1");
+    setTrackLoop(false);
+    setTrackDefense(DEFAULT_DEFENSE);
+    setTrackOffense([]);
+    setTrackStyle(TRACKING_STYLE_DEFAULTS);
+  };
   const trackShapes = useMemo<TrackingShapes>(
     () => ({ defense: toToggles(trackDefense), offense: toToggles(trackOffense) }),
     [trackDefense, trackOffense],
@@ -293,10 +322,13 @@ function Docs() {
 
   const trackingExamples = useMemo<Record<Framework, string>>(() => {
     const state = {
+      courtType: trackType,
       orientation: trackOrientation,
       floor: trackFloor,
       speed: Number(trackSpeed),
+      loop: trackLoop,
       shapes: trackShapes,
+      style: trackStyle,
     };
     return {
       vanilla: trackingTemplates.vanilla(state),
@@ -305,7 +337,7 @@ function Docs() {
       svelte: trackingTemplates.svelte(state),
       angular: trackingTemplates.angular(state),
     };
-  }, [trackOrientation, trackFloor, trackSpeed, trackShapes]);
+  }, [trackType, trackOrientation, trackFloor, trackSpeed, trackLoop, trackShapes, trackStyle]);
 
   return (
     <article className="space-y-14">
@@ -862,58 +894,192 @@ interface ZoneData {
         <Demo
           controls={
             <>
-              <Control label="defense">
-                <ToggleChips
-                  value={trackDefense}
-                  onChange={setTrackDefense}
-                  options={SHAPE_OPTIONS}
-                />
-              </Control>
-              <Control label="offense">
-                <ToggleChips
-                  value={trackOffense}
-                  onChange={setTrackOffense}
-                  options={SHAPE_OPTIONS}
-                />
-              </Control>
-              <Control label="speed">
-                <SegmentedControl
-                  value={trackSpeed}
-                  onChange={setTrackSpeed}
-                  options={SPEED_OPTIONS}
-                />
-              </Control>
-              <Control label="orientation">
-                <SegmentedControl
-                  value={trackOrientation}
-                  onChange={setTrackOrientation}
-                  options={[
-                    { value: "horizontal", label: "Horizontal" },
-                    { value: "vertical", label: "Vertical" },
-                  ]}
-                />
-              </Control>
-              <Control label="floor">
-                <SegmentedControl
-                  value={trackFloor}
-                  onChange={setTrackFloor}
-                  options={FLOOR_OPTIONS}
-                />
-              </Control>
+              <ControlGroup title="Court">
+                <Control label="courtType">
+                  <SegmentedControl
+                    value={trackType}
+                    onChange={setTrackType}
+                    options={TRACKING_COURT_OPTIONS}
+                  />
+                </Control>
+                <Control label="orientation">
+                  <SegmentedControl
+                    value={trackOrientation}
+                    onChange={setTrackOrientation}
+                    options={[
+                      { value: "horizontal", label: "Horizontal" },
+                      { value: "vertical", label: "Vertical" },
+                    ]}
+                  />
+                </Control>
+                <Control label="floor">
+                  <SegmentedControl
+                    value={trackFloor}
+                    onChange={setTrackFloor}
+                    options={FLOOR_OPTIONS}
+                  />
+                </Control>
+              </ControlGroup>
+              <ControlGroup title="Playback">
+                <Control label="speed">
+                  <SegmentedControl
+                    value={trackSpeed}
+                    onChange={setTrackSpeed}
+                    options={SPEED_OPTIONS}
+                  />
+                </Control>
+                <Control label="loop">
+                  <SegmentedControl
+                    value={trackLoop ? "on" : "off"}
+                    onChange={(v) => setTrackLoop(v === "on")}
+                    options={ON_OFF}
+                  />
+                </Control>
+              </ControlGroup>
+              <ControlGroup title="Team shapes">
+                <Control label="shapes.defense">
+                  <ToggleChips
+                    value={trackDefense}
+                    onChange={setTrackDefense}
+                    options={SHAPE_OPTIONS}
+                  />
+                </Control>
+                <Control label="shapes.offense">
+                  <ToggleChips
+                    value={trackOffense}
+                    onChange={setTrackOffense}
+                    options={SHAPE_OPTIONS}
+                  />
+                </Control>
+                <Control label="style.hullOpacity">
+                  <Slider
+                    label="Hull opacity"
+                    value={trackStyle.hullOpacity}
+                    onChange={(v) => setStyleKey("hullOpacity", v)}
+                    min={0}
+                    max={0.6}
+                    step={0.05}
+                  />
+                </Control>
+                <Control label="style.centroidRadius">
+                  <Slider
+                    label="Centroid radius"
+                    value={trackStyle.centroidRadius}
+                    onChange={(v) => setStyleKey("centroidRadius", v)}
+                    min={0.4}
+                    max={2}
+                    step={0.1}
+                    unit="ft"
+                  />
+                </Control>
+                <Control label="style.spokeWidth">
+                  <Slider
+                    label="Spoke width"
+                    value={trackStyle.spokeWidth}
+                    onChange={(v) => setStyleKey("spokeWidth", v)}
+                    min={0.05}
+                    max={0.4}
+                    step={0.01}
+                    unit="ft"
+                  />
+                </Control>
+              </ControlGroup>
+              <ControlGroup title="Players & ball">
+                <Control label="style.labels">
+                  <SegmentedControl
+                    value={trackStyle.labels ? "on" : "off"}
+                    onChange={(v) => setStyleKey("labels", v === "on")}
+                    options={ON_OFF}
+                  />
+                </Control>
+                <Control label="style.playerRadius">
+                  <Slider
+                    label="Player radius"
+                    value={trackStyle.playerRadius}
+                    onChange={(v) => setStyleKey("playerRadius", v)}
+                    min={0.5}
+                    max={2}
+                    step={0.1}
+                    unit="ft"
+                  />
+                </Control>
+                <Control label="style.ballRadius">
+                  <Slider
+                    label="Ball radius"
+                    value={trackStyle.ballRadius}
+                    onChange={(v) => setStyleKey("ballRadius", v)}
+                    min={0.25}
+                    max={1.5}
+                    step={0.05}
+                    unit="ft"
+                  />
+                </Control>
+                <Control label="style.opacity">
+                  <Slider
+                    label="Player opacity"
+                    value={trackStyle.opacity}
+                    onChange={(v) => setStyleKey("opacity", v)}
+                    min={0.2}
+                    max={1}
+                    step={0.05}
+                  />
+                </Control>
+                <Control label="style.homeColor">
+                  <ColorSwatch
+                    label="Home color"
+                    value={trackStyle.homeColor}
+                    onChange={(v) => setStyleKey("homeColor", v)}
+                  />
+                </Control>
+                <Control label="style.awayColor">
+                  <ColorSwatch
+                    label="Away color"
+                    value={trackStyle.awayColor}
+                    onChange={(v) => setStyleKey("awayColor", v)}
+                  />
+                </Control>
+                <Control label="style.ballColor">
+                  <ColorSwatch
+                    label="Ball color"
+                    value={trackStyle.ballColor}
+                    onChange={(v) => setStyleKey("ballColor", v)}
+                  />
+                </Control>
+                <Control label="style.labelColor">
+                  <ColorSwatch
+                    label="Label color"
+                    value={trackStyle.labelColor}
+                    onChange={(v) => setStyleKey("labelColor", v)}
+                  />
+                </Control>
+              </ControlGroup>
+              <div className="flex w-full justify-end">
+                <button
+                  type="button"
+                  onClick={resetTracking}
+                  className="rounded-md border border-line bg-canvas px-2.5 py-1 text-xs font-medium text-fg-muted hover:border-line-strong hover:text-fg"
+                >
+                  Reset all options
+                </button>
+              </div>
             </>
           }
         >
           <Tracking
             data={trackingFrames}
             fps={trackingFps}
+            courtType={trackType}
             orientation={trackOrientation}
             floor={trackFloor}
             speed={Number(trackSpeed)}
+            loop={trackLoop}
             shapes={trackShapes}
+            style={trackStyle}
           />
           <div className="mt-4 flex flex-wrap justify-center gap-x-6 gap-y-1 text-xs text-fg-muted">
-            {TRACKING_TEAMS.map(({ side, color }) => {
+            {TRACKING_SIDES.map((side) => {
               const players = trackingRoster.filter((p) => p.team === side);
+              const color = side === "home" ? trackStyle.homeColor : trackStyle.awayColor;
               return (
                 <span key={side} className="inline-flex items-center gap-1.5">
                   <span className="size-2.5 rounded-full" style={{ background: color }} />
@@ -941,6 +1107,14 @@ interface ZoneData {
           player. They follow each frame's <Code>offense</Code> field, so they flip sides when
           possession changes, and <Code>setShapes()</Code> updates them without rebuilding the
           court. The same math is exported as <Code>teamCentroid</Code> and <Code>teamHull</Code>.
+        </p>
+        <p className="text-fg-muted">
+          Every control above maps to one option, and the code below updates to match. Style and
+          shape changes go through <Code>setStyle</Code> / <Code>setShapes</Code> without
+          rebuilding; court, orientation, floor and loop remount the chart. Two options have no
+          control on purpose: <Code>fps</Code> describes the source data (25 Hz here), and{" "}
+          <Code>offense</Code> is only a fallback for frames without an <Code>offense</Code> field —
+          this clip has one on every frame.
         </p>
         <FrameworkTabs examples={trackingExamples} />
       </Section>
