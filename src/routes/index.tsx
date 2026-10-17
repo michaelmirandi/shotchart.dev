@@ -28,6 +28,7 @@ import { HexbinShotchart } from "../components/HexbinShotchart";
 import { LandmarksTable } from "../components/LandmarksTable";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { ShotScatter } from "../components/ShotScatter";
+import { Tracking } from "../components/Tracking";
 import { ZoneCodesTable } from "../components/ZoneCodesTable";
 import { ZoneDataInspector } from "../components/ZoneDataInspector";
 import { ZonedShotchart } from "../components/ZonedShotchart";
@@ -38,9 +39,11 @@ import {
   halfcourtTemplates,
   hexbinTemplates,
   scatterTemplates,
+  trackingTemplates,
   zonedTemplates,
 } from "../lib/code-templates";
 import { exampleZoneData, generateShots, sparseZoneData } from "../lib/sample-data";
+import { trackingFps, trackingFrames, trackingRoster } from "../lib/tracking-sample";
 
 export const Route = createFileRoute("/")({
   component: Docs,
@@ -94,6 +97,19 @@ const CUSTOM_FLOOR: FloorOptions = {
 
 type HexRadiusKey = "1" | "1.5" | "2";
 
+type SpeedKey = "0.5" | "1" | "2";
+
+const SPEED_OPTIONS: ReadonlyArray<{ value: SpeedKey; label: string }> = [
+  { value: "0.5", label: "0.5×" },
+  { value: "1", label: "1×" },
+  { value: "2", label: "2×" },
+];
+
+const TRACKING_TEAMS = [
+  { side: "away", color: "#dc2626" },
+  { side: "home", color: "#2563eb" },
+] as const;
+
 interface ApiRow {
   name: string;
   sig: string;
@@ -133,6 +149,10 @@ function Docs() {
   const [hexRadius, setHexRadius] = useState<HexRadiusKey>("1.5");
   const [hexFloor, setHexFloor] = useState<FloorChoice>("none");
   const [hexMin, setHexMin] = useState<"1" | "3">("1");
+
+  const [trackOrientation, setTrackOrientation] = useState<Orientation>("horizontal");
+  const [trackFloor, setTrackFloor] = useState<FloorChoice>("maple");
+  const [trackSpeed, setTrackSpeed] = useState<SpeedKey>("1");
 
   const [dimType, setDimType] = useState<CourtType>("nba");
 
@@ -216,6 +236,17 @@ function Docs() {
     };
   }, [hexType, hexShots, hexTheme, hexRadius, hexFloor, hexMin]);
 
+  const trackingExamples = useMemo<Record<Framework, string>>(() => {
+    const state = { orientation: trackOrientation, floor: trackFloor, speed: Number(trackSpeed) };
+    return {
+      vanilla: trackingTemplates.vanilla(state),
+      react: trackingTemplates.react(state),
+      vue: trackingTemplates.vue(state),
+      svelte: trackingTemplates.svelte(state),
+      angular: trackingTemplates.angular(state),
+    };
+  }, [trackOrientation, trackFloor, trackSpeed]);
+
   return (
     <article className="space-y-14">
       {/* ------------------------------------------------------------------ */}
@@ -235,7 +266,9 @@ function Docs() {
           <strong className="font-medium">Shots</strong>: three ways to put attempts on that court —
           one mark per shot (<Code>createShotScatter</Code>
           ), 14 buckets colored by percentile (<Code>createZonedShotchart</Code>), or hexagonal bins
-          (<Code>createHexbinShotchart</Code>). Wrappers for every major framework live below.
+          (<Code>createHexbinShotchart</Code>). <strong className="font-medium">Tracking</strong>:{" "}
+          <Code>createTracking</Code> plays back player and ball positions on a full court. Wrappers
+          for every major framework live below.
         </p>
       </section>
 
@@ -754,6 +787,135 @@ interface ZoneData {
       </Section>
 
       {/* ------------------------------------------------------------------ */}
+      {/* Tracking                                                           */}
+      {/* ------------------------------------------------------------------ */}
+
+      <Section
+        id="tracking"
+        title="Playback"
+        subtitle={
+          <>
+            <Code>createTracking</Code> — ten players and the ball on a full court, frame by frame.
+          </>
+        }
+      >
+        <Demo
+          controls={
+            <>
+              <Control label="speed">
+                <SegmentedControl
+                  value={trackSpeed}
+                  onChange={setTrackSpeed}
+                  options={SPEED_OPTIONS}
+                />
+              </Control>
+              <Control label="orientation">
+                <SegmentedControl
+                  value={trackOrientation}
+                  onChange={setTrackOrientation}
+                  options={[
+                    { value: "horizontal", label: "Horizontal" },
+                    { value: "vertical", label: "Vertical" },
+                  ]}
+                />
+              </Control>
+              <Control label="floor">
+                <SegmentedControl
+                  value={trackFloor}
+                  onChange={setTrackFloor}
+                  options={FLOOR_OPTIONS}
+                />
+              </Control>
+            </>
+          }
+        >
+          <Tracking
+            data={trackingFrames}
+            fps={trackingFps}
+            orientation={trackOrientation}
+            floor={trackFloor}
+            speed={Number(trackSpeed)}
+          />
+          <div className="mt-4 flex flex-wrap justify-center gap-x-6 gap-y-1 text-xs text-fg-muted">
+            {TRACKING_TEAMS.map(({ side, color }) => {
+              const players = trackingRoster.filter((p) => p.team === side);
+              return (
+                <span key={side} className="inline-flex items-center gap-1.5">
+                  <span className="size-2.5 rounded-full" style={{ background: color }} />
+                  {players[0]?.teamName} ({side}) ·{" "}
+                  {players.map((p) => `#${p.label} ${p.name}`).join(", ")}
+                </span>
+              );
+            })}
+          </div>
+        </Demo>
+        <p className="text-fg-muted">
+          One real possession of 25 Hz optical tracking: Connecticut attacks the left basket, swings
+          it to the top, and Solomon Ball's three over a closeout misses. Dots are keyed by player
+          id, so each frame only moves existing nodes. Playback is time-based (
+          <Code>fps × speed</Code>), and the instance exposes <Code>play</Code>, <Code>pause</Code>,{" "}
+          <Code>setFrame</Code>, <Code>setSpeed</Code> and an <Code>onFrame</Code> callback —
+          everything a scrubber needs. The ball grows slightly with its height.
+        </p>
+        <FrameworkTabs examples={trackingExamples} />
+      </Section>
+
+      <Section
+        id="tracking-data"
+        title="Tracking data"
+        subtitle="The per-frame input for createTracking."
+      >
+        <p>
+          Positions are in <strong className="font-medium">feet from center court</strong>:{" "}
+          <Code>x</Code> runs along the court's length (baskets at about ±41.75 on a 94' court),{" "}
+          <Code>y</Code> across it, and the ball's <Code>z</Code> is its height. On a horizontal
+          court <Code>+x</Code> points right and <Code>+y</Code> up. A frame with no players (some
+          feeds drop them during dead balls) draws only the ball.
+        </p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Labeled label="The TrackingFrame type">
+            <CodeBlock
+              lang="typescript"
+              code={`import type { TrackingFrame } from "shotchart.ts";
+
+interface TrackingFrame {
+  frame: number;              // source frame index
+  gameClock?: number;         // seconds left in period
+  shotClock?: number | null;
+  players: {
+    id: string | number;      // keys the dot across frames
+    team: "home" | "away";
+    x: number;                // feet from center court
+    y: number;
+    label?: string;           // jersey number
+  }[];
+  ball?: { x: number; y: number; z?: number } | null;
+}`}
+            />
+          </Labeled>
+          <Labeled label="From BBI player_frames / ball_frames">
+            <CodeBlock
+              lang="typescript"
+              code={`import { createTracking, fromBbiTracking } from "shotchart.ts";
+
+// Rows straight from a CSV parser — strings are fine.
+// Frames follow the ball rows, so dead-ball gaps in
+// the player feed come back with players: [].
+const frames = fromBbiTracking(playerRows, ballRows, {
+  roster, // optional: jersey labels by player_id_tracking
+});
+
+// Cut one possession by its start/end frame.
+const clip = frames.filter(
+  (f) => f.frame >= 1837 && f.frame <= 2300,
+);
+createTracking(svg, { courtType: "ncaam", data: clip });`}
+            />
+          </Labeled>
+        </div>
+      </Section>
+
+      {/* ------------------------------------------------------------------ */}
       {/* Reference                                                          */}
       {/* ------------------------------------------------------------------ */}
 
@@ -787,6 +949,12 @@ interface ZoneData {
               name: "createHexbinShotchart",
               sig: "(svg, options) → HexbinShotchartInstance",
               notes: "Hexbins. Instance has setData / setTheme / setRadius / bins / destroy.",
+            },
+            {
+              name: "createTracking",
+              sig: "(svg, options) → TrackingInstance",
+              notes:
+                "Tracking playback. Instance has setFrame / frame / play / pause / isPlaying / setSpeed / setData / setStyle / destroy.",
             },
           ]}
         />
@@ -830,6 +998,16 @@ interface ZoneData {
               name: "svgToShot",
               sig: "(Point, settings) → { x, y }",
               notes: "Inverse of shotToSvg.",
+            },
+            {
+              name: "trackingToSvg",
+              sig: "({ x, y }, settings) → Point",
+              notes: "Center-court feet → fullcourt SVG coordinates (vertical local frame).",
+            },
+            {
+              name: "fromBbiTracking",
+              sig: "(playerRows, ballRows?, { roster? }) → TrackingFrame[]",
+              notes: "Group flat BBI player / ball frame rows into frames.",
             },
             {
               name: "binShots",

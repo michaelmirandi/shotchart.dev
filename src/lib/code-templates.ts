@@ -357,3 +357,29 @@ export const fullcourtTemplates = templatesFor<FullcourtState>(
     setters: [],
   }),
 );
+
+export interface TrackingState {
+  orientation: Orientation;
+  floor: FloorChoice;
+  speed: number;
+}
+
+export const trackingTemplates = templatesFor<TrackingState>(({ orientation, floor, speed }) => ({
+  factory: "createTracking",
+  instanceType: "TrackingInstance",
+  types: ["TrackingFrame"],
+  componentName: "Tracking",
+  selector: "app-tracking",
+  svgClass: orientation === "horizontal" ? "w-full max-w-4xl" : "w-full max-w-xs",
+  preamble: `// One possession: [{ frame, gameClock, shotClock, players: [{ id, team, x, y, label }], ball }]
+import possession from "./possession.json";
+const frames = possession as TrackingFrame[];`,
+  options: {
+    courtType: "ncaam",
+    data: { raw: "frames" },
+    orientation: orientation === "vertical" ? "vertical" : undefined,
+    floor: floorOption(floor),
+    speed: speed === 1 ? undefined : speed,
+  },
+  setters: ["play()", "pause()", "setFrame(i)", `setSpeed(${speed === 1 ? 2 : 1})`],
+}));

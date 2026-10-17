@@ -44,6 +44,13 @@ export const NAV: NavGroup[] = [
     ],
   },
   {
+    label: "Tracking",
+    items: [
+      { id: "tracking", label: "Playback" },
+      { id: "tracking-data", label: "Tracking data" },
+    ],
+  },
+  {
     label: "Reference",
     items: [
       { id: "api-reference", label: "API reference" },
