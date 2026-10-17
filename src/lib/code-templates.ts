@@ -6,6 +6,7 @@ import type {
   Orientation,
   Shot,
   Theme,
+  TrackingShapes,
   ZoneData,
 } from "shotchart.ts";
 
@@ -362,24 +363,45 @@ export interface TrackingState {
   orientation: Orientation;
   floor: FloorChoice;
   speed: number;
+  shapes: TrackingShapes;
 }
 
-export const trackingTemplates = templatesFor<TrackingState>(({ orientation, floor, speed }) => ({
-  factory: "createTracking",
-  instanceType: "TrackingInstance",
-  types: ["TrackingFrame"],
-  componentName: "Tracking",
-  selector: "app-tracking",
-  svgClass: orientation === "horizontal" ? "w-full max-w-4xl" : "w-full max-w-xs",
-  preamble: `// One possession: [{ frame, gameClock, shotClock, players: [{ id, team, x, y, label }], ball }]
+/** Only the toggles that are on, e.g. `{ defense: { centroid: true, hull: true } }`. */
+function shapesOption(shapes: TrackingShapes): OptValue {
+  const sides = (["defense", "offense"] as const).flatMap((role) => {
+    const on = Object.entries(shapes[role] ?? {})
+      .filter(([, v]) => v)
+      .map(([k]) => `${k}: true`);
+    return on.length ? [`${role}: { ${on.join(", ")} }`] : [];
+  });
+  return sides.length ? { raw: `{ ${sides.join(", ")} }` } : undefined;
+}
+
+export const trackingTemplates = templatesFor<TrackingState>(
+  ({ orientation, floor, speed, shapes }) => ({
+    factory: "createTracking",
+    instanceType: "TrackingInstance",
+    types: ["TrackingFrame"],
+    componentName: "Tracking",
+    selector: "app-tracking",
+    svgClass: orientation === "horizontal" ? "w-full max-w-4xl" : "w-full max-w-xs",
+    preamble: `// One possession: [{ frame, offense, gameClock, shotClock, players: [{ id, team, x, y, label }], ball }]
 import possession from "./possession.json";
 const frames = possession as TrackingFrame[];`,
-  options: {
-    courtType: "ncaam",
-    data: { raw: "frames" },
-    orientation: orientation === "vertical" ? "vertical" : undefined,
-    floor: floorOption(floor),
-    speed: speed === 1 ? undefined : speed,
-  },
-  setters: ["play()", "pause()", "setFrame(i)", `setSpeed(${speed === 1 ? 2 : 1})`],
-}));
+    options: {
+      courtType: "ncaam",
+      data: { raw: "frames" },
+      orientation: orientation === "vertical" ? "vertical" : undefined,
+      floor: floorOption(floor),
+      speed: speed === 1 ? undefined : speed,
+      shapes: shapesOption(shapes),
+    },
+    setters: [
+      "play()",
+      "pause()",
+      "setFrame(i)",
+      `setSpeed(${speed === 1 ? 2 : 1})`,
+      "setShapes({ offense: { centroid: true } })",
+    ],
+  }),
+);

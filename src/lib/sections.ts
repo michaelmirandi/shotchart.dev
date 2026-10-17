@@ -48,6 +48,7 @@ export const NAV: NavGroup[] = [
     items: [
       { id: "tracking", label: "Playback" },
       { id: "tracking-data", label: "Tracking data" },
+      { id: "tracking-custom", label: "Build your own" },
     ],
   },
   {

@@ -13,6 +13,7 @@ import {
   nfhsSettings,
   type Orientation,
   type Theme,
+  type TrackingShapes,
   wnbaSettings,
 } from "shotchart.ts";
 import { CodeBlock } from "../components/CodeBlock";
@@ -28,7 +29,9 @@ import { HexbinShotchart } from "../components/HexbinShotchart";
 import { LandmarksTable } from "../components/LandmarksTable";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { ShotScatter } from "../components/ShotScatter";
+import { ToggleChips } from "../components/ToggleChips";
 import { Tracking } from "../components/Tracking";
+import { nearestDefenderOverlay } from "../components/TrackingCustomOverlay";
 import { ZoneCodesTable } from "../components/ZoneCodesTable";
 import { ZoneDataInspector } from "../components/ZoneDataInspector";
 import { ZonedShotchart } from "../components/ZonedShotchart";
@@ -105,6 +108,52 @@ const SPEED_OPTIONS: ReadonlyArray<{ value: SpeedKey; label: string }> = [
   { value: "2", label: "2×" },
 ];
 
+type ShapeKey = "centroid" | "hull" | "spokes";
+
+const SHAPE_OPTIONS: ReadonlyArray<{ value: ShapeKey; label: string }> = [
+  { value: "centroid", label: "Centroid" },
+  { value: "hull", label: "Shell" },
+  { value: "spokes", label: "Spokes" },
+];
+
+const toToggles = (on: readonly ShapeKey[]) => ({
+  centroid: on.includes("centroid"),
+  hull: on.includes("hull"),
+  spokes: on.includes("spokes"),
+});
+
+const CUSTOM_OVERLAY_CODE = `import { select } from "d3-selection";
+import { createTracking } from "shotchart.ts";
+
+const chart = createTracking(svg, { courtType: "ncaam", data: frames });
+const layer = select(chart.overlay());
+const line = layer.append("line").attr("stroke", "#111827").attr("stroke-width", 0.15);
+const label = layer.append("text").style("font-size", "1.3px", "important");
+
+// Ball → nearest defender, redrawn on every frame.
+const off = chart.addFrameListener((_, frame) => {
+  const ball = frame.ball;
+  const defense = frame.offense === "home" ? "away" : "home";
+  const defenders = frame.players.filter((p) => p.team === defense);
+  if (!ball || !frame.offense || defenders.length === 0) return;
+  const dist = (p) => Math.hypot(p.x - ball.x, p.y - ball.y);
+  const nearest = defenders.reduce((a, b) => (dist(a) <= dist(b) ? a : b));
+
+  const from = chart.project(ball); // tracking feet → overlay coords
+  const to = chart.project(nearest);
+  line.attr("x1", from.x).attr("y1", from.y).attr("x2", to.x).attr("y2", to.y);
+  label
+    .attr("x", to.x)
+    .attr("y", to.y)
+    // Horizontal courts rotate the overlay -90°; turn text back upright.
+    .attr("transform", chart.orientation === "horizontal"
+      ? "rotate(90, " + to.x + ", " + to.y + ")"
+      : null)
+    .text(dist(nearest).toFixed(1) + " ft");
+});
+
+// Teardown: off(); chart.destroy();`;
+
 const TRACKING_TEAMS = [
   { side: "away", color: "#dc2626" },
   { side: "home", color: "#2563eb" },
@@ -153,6 +202,12 @@ function Docs() {
   const [trackOrientation, setTrackOrientation] = useState<Orientation>("horizontal");
   const [trackFloor, setTrackFloor] = useState<FloorChoice>("maple");
   const [trackSpeed, setTrackSpeed] = useState<SpeedKey>("1");
+  const [trackDefense, setTrackDefense] = useState<ShapeKey[]>(["centroid", "hull"]);
+  const [trackOffense, setTrackOffense] = useState<ShapeKey[]>([]);
+  const trackShapes = useMemo<TrackingShapes>(
+    () => ({ defense: toToggles(trackDefense), offense: toToggles(trackOffense) }),
+    [trackDefense, trackOffense],
+  );
 
   const [dimType, setDimType] = useState<CourtType>("nba");
 
@@ -237,7 +292,12 @@ function Docs() {
   }, [hexType, hexShots, hexTheme, hexRadius, hexFloor, hexMin]);
 
   const trackingExamples = useMemo<Record<Framework, string>>(() => {
-    const state = { orientation: trackOrientation, floor: trackFloor, speed: Number(trackSpeed) };
+    const state = {
+      orientation: trackOrientation,
+      floor: trackFloor,
+      speed: Number(trackSpeed),
+      shapes: trackShapes,
+    };
     return {
       vanilla: trackingTemplates.vanilla(state),
       react: trackingTemplates.react(state),
@@ -245,7 +305,7 @@ function Docs() {
       svelte: trackingTemplates.svelte(state),
       angular: trackingTemplates.angular(state),
     };
-  }, [trackOrientation, trackFloor, trackSpeed]);
+  }, [trackOrientation, trackFloor, trackSpeed, trackShapes]);
 
   return (
     <article className="space-y-14">
@@ -802,6 +862,20 @@ interface ZoneData {
         <Demo
           controls={
             <>
+              <Control label="defense">
+                <ToggleChips
+                  value={trackDefense}
+                  onChange={setTrackDefense}
+                  options={SHAPE_OPTIONS}
+                />
+              </Control>
+              <Control label="offense">
+                <ToggleChips
+                  value={trackOffense}
+                  onChange={setTrackOffense}
+                  options={SHAPE_OPTIONS}
+                />
+              </Control>
               <Control label="speed">
                 <SegmentedControl
                   value={trackSpeed}
@@ -835,6 +909,7 @@ interface ZoneData {
             orientation={trackOrientation}
             floor={trackFloor}
             speed={Number(trackSpeed)}
+            shapes={trackShapes}
           />
           <div className="mt-4 flex flex-wrap justify-center gap-x-6 gap-y-1 text-xs text-fg-muted">
             {TRACKING_TEAMS.map(({ side, color }) => {
@@ -856,6 +931,16 @@ interface ZoneData {
           <Code>fps × speed</Code>), and the instance exposes <Code>play</Code>, <Code>pause</Code>,{" "}
           <Code>setFrame</Code>, <Code>setSpeed</Code> and an <Code>onFrame</Code> callback —
           everything a scrubber needs. The ball grows slightly with its height.
+        </p>
+        <p className="text-fg-muted">
+          <strong className="font-medium text-fg">Team shapes</strong> toggle per side of the ball:
+          the <strong className="font-medium text-fg">centroid</strong> is the team's mean position
+          (a ring + crosshair), the <strong className="font-medium text-fg">shell</strong> is the
+          convex hull around its five players, and{" "}
+          <strong className="font-medium text-fg">spokes</strong> connect the centroid to each
+          player. They follow each frame's <Code>offense</Code> field, so they flip sides when
+          possession changes, and <Code>setShapes()</Code> updates them without rebuilding the
+          court. The same math is exported as <Code>teamCentroid</Code> and <Code>teamHull</Code>.
         </p>
         <FrameworkTabs examples={trackingExamples} />
       </Section>
@@ -882,6 +967,7 @@ interface TrackingFrame {
   frame: number;              // source frame index
   gameClock?: number;         // seconds left in period
   shotClock?: number | null;
+  offense?: "home" | "away";  // who has the ball (team shapes)
   players: {
     id: string | number;      // keys the dot across frames
     team: "home" | "away";
@@ -902,7 +988,8 @@ interface TrackingFrame {
 // Frames follow the ball rows, so dead-ball gaps in
 // the player feed come back with players: [].
 const frames = fromBbiTracking(playerRows, ballRows, {
-  roster, // optional: jersey labels by player_id_tracking
+  roster,      // jersey labels + team id → home/away
+  possessions, // possessions.csv → each frame's offense
 });
 
 // Cut one possession by its start/end frame.
@@ -913,6 +1000,37 @@ createTracking(svg, { courtType: "ncaam", data: clip });`}
             />
           </Labeled>
         </div>
+      </Section>
+
+      <Section
+        id="tracking-custom"
+        title="Build your own"
+        subtitle="Draw custom overlays that stay in sync with playback."
+      >
+        <p>
+          Three hooks are enough for most custom visuals: <Code>overlay()</Code> returns an empty{" "}
+          <Code>{"<g>"}</Code> above the built-in marks (it survives <Code>setData</Code>,{" "}
+          <Code>setStyle</Code> and <Code>setShapes</Code>), <Code>project()</Code> turns tracking
+          feet into its coordinates, and <Code>addFrameListener()</Code> fires on every frame change
+          and returns an unsubscribe function. The demo below uses only those to connect the ball to
+          the nearest defender.
+        </p>
+        <Demo>
+          <Tracking
+            data={trackingFrames}
+            fps={trackingFps}
+            floor="maple"
+            setup={nearestDefenderOverlay}
+          />
+        </Demo>
+        <CodeBlock lang="typescript" code={CUSTOM_OVERLAY_CODE} />
+        <p className="text-fg-muted">
+          Text needs two tweaks: on a horizontal court the overlay is rotated −90°, so turn labels
+          back with <Code>rotate(90, x, y)</Code> (<Code>chart.orientation</Code> tells you which
+          layout you are on), and the stylesheet's <Code>.shotchart text</Code> rule sets fill and
+          stroke with <Code>!important</Code>, so restyle text with inline{" "}
+          <Code>{'style(..., "important")'}</Code>.
+        </p>
       </Section>
 
       {/* ------------------------------------------------------------------ */}
@@ -954,7 +1072,7 @@ createTracking(svg, { courtType: "ncaam", data: clip });`}
               name: "createTracking",
               sig: "(svg, options) → TrackingInstance",
               notes:
-                "Tracking playback. Instance has setFrame / frame / play / pause / isPlaying / setSpeed / setData / setStyle / destroy.",
+                "Tracking playback. Instance has setFrame / frame / current / play / pause / isPlaying / setSpeed / setData / setStyle / setShapes / overlay / project / addFrameListener / orientation / destroy.",
             },
           ]}
         />
@@ -1005,9 +1123,20 @@ createTracking(svg, { courtType: "ncaam", data: clip });`}
               notes: "Center-court feet → fullcourt SVG coordinates (vertical local frame).",
             },
             {
+              name: "teamCentroid",
+              sig: "(players, team) → Point | null",
+              notes: "Mean position of one team, in tracking feet.",
+            },
+            {
+              name: "teamHull",
+              sig: "(players, team) → Point[]",
+              notes: "Convex hull around one team (empty with fewer than 3 players).",
+            },
+            {
               name: "fromBbiTracking",
-              sig: "(playerRows, ballRows?, { roster? }) → TrackingFrame[]",
-              notes: "Group flat BBI player / ball frame rows into frames.",
+              sig: "(playerRows, ballRows?, { roster?, possessions?, homeTeamId? }) → TrackingFrame[]",
+              notes:
+                "Group flat BBI player / ball frame rows into frames; possessions set offense.",
             },
             {
               name: "binShots",

@@ -5,6 +5,7 @@ import {
   type Orientation,
   type TrackingFrame,
   type TrackingInstance,
+  type TrackingShapes,
 } from "shotchart.ts";
 import { formatClock } from "../lib/tracking-sample";
 
@@ -14,6 +15,12 @@ interface Props {
   orientation?: Orientation;
   floor?: FloorInput;
   speed?: number;
+  shapes?: TrackingShapes;
+  /**
+   * Runs after every (re)mount with the live instance — the place to draw
+   * custom overlays. Return a cleanup. Must be referentially stable.
+   */
+  setup?: (chart: TrackingInstance) => (() => void) | undefined;
 }
 
 export function Tracking({
@@ -22,15 +29,17 @@ export function Tracking({
   orientation = "horizontal",
   floor = "none",
   speed = 1,
+  shapes,
+  setup,
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const chartRef = useRef<TrackingInstance | null>(null);
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
 
-  // Rebuild on structural changes and resume from the same frame; speed
-  // propagates via its setter.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional — frame/speed are captured at mount
+  // Rebuild on structural changes and resume from the same frame; speed and
+  // shapes propagate via their setters.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional — frame/speed/shapes are captured at mount
   useEffect(() => {
     if (!svgRef.current) return;
     const chart = createTracking(svgRef.current, {
@@ -40,6 +49,7 @@ export function Tracking({
       data,
       fps,
       speed,
+      shapes,
       onFrame: (i) => {
         setIndex(i);
         // Playback stops by itself at the last frame.
@@ -47,17 +57,23 @@ export function Tracking({
       },
     });
     chartRef.current = chart;
+    const cleanup = setup?.(chart);
     chart.setFrame(index);
     setPlaying(false);
     return () => {
+      cleanup?.();
       chart.destroy();
       chartRef.current = null;
     };
-  }, [data, fps, orientation, floor]);
+  }, [data, fps, orientation, floor, setup]);
 
   useEffect(() => {
     chartRef.current?.setSpeed(speed);
   }, [speed]);
+
+  useEffect(() => {
+    if (shapes) chartRef.current?.setShapes(shapes);
+  }, [shapes]);
 
   function toggle() {
     const chart = chartRef.current;

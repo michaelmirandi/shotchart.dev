@@ -44,6 +44,10 @@
     { "id": "467", "team": "home", "label": "3", "name": "Isaiah Evans", "teamName": "Duke" }
   ],
   "columns": "frame, gameClock, shotClock, ballX, ballY, ballZ, then x, y per roster entry",
+  "possessions": [
+    { "start": 1837, "end": 2300, "offense": "away" },
+    { "start": 2300, "end": 3131, "offense": "home" }
+  ],
   "frames": [
     [
       1837, 1164.52, 30.0, 41.87, 4.95, 7.48, 38.72, 14.38, 25.15, -1.92, 41.57, 3.05, 38.84, 0.22,

@@ -16,6 +16,12 @@ export interface SampleRosterEntry {
  */
 export const trackingRoster = sample.roster as SampleRosterEntry[];
 
+/** Possession spans (`[start, end)` source frames) overlapping the clip. */
+const possessions = sample.possessions as { start: number; end: number; offense: TrackingTeam }[];
+
+const offenseAt = (frame: number): TrackingTeam | undefined =>
+  possessions.find((p) => p.start <= frame && frame < p.end)?.offense;
+
 export const trackingFrames: TrackingFrame[] = sample.frames.map((row) => {
   const [frame, gameClock, shotClock, bx, by, bz] = row as [
     number,
@@ -33,7 +39,14 @@ export const trackingFrames: TrackingFrame[] = sample.frames.map((row) => {
       players.push({ id: p.id, team: p.team, x, y, label: p.label });
     }
   }
-  return { frame, gameClock, shotClock, players, ball: { x: bx, y: by, z: bz } };
+  return {
+    frame,
+    gameClock,
+    shotClock,
+    players,
+    ball: { x: bx, y: by, z: bz },
+    offense: offenseAt(frame),
+  };
 });
 
 export const trackingFps = sample.fps;
